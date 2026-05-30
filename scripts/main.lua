@@ -41,6 +41,17 @@ win:SetMainMenu({
                 gui.SetDarkMode(isDark)
                 themeLabel:SetText("主题: " .. (isDark and "🌙 Dark" or "☀️ Light"))
             end },
+            { label = "打开新窗口", action = function()
+                local win2 = gui.NewWindow("独立窗口", 400, 300)
+                local lbl = gui.Label("🎉 这是一个独立窗口！\n\n热重载时会被关闭重建。")
+                local btnClose = gui.Button("关闭此窗口")
+                btnClose:OnClick(function()
+                    win2:Close()
+                end)
+                win2:SetContent(gui.VBox(lbl, btnClose))
+                win2:CenterOnScreen()
+                win2:Show()
+            end },
         }
     },
     {

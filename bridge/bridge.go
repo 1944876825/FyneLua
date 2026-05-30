@@ -51,6 +51,7 @@ func NewEngine(a fyne.App) *lua.LState {
 	// Build the "gui" module table
 	mod := L.NewTable()
 	L.SetField(mod, "Window", L.NewFunction(lWindowFn(a)))
+	L.SetField(mod, "NewWindow", L.NewFunction(lNewWindowFn(a)))
 	L.SetField(mod, "Button", L.NewFunction(lButtonFn))
 	L.SetField(mod, "Label", L.NewFunction(lLabelFn))
 	L.SetField(mod, "Entry", L.NewFunction(lEntryFn))
@@ -335,6 +336,18 @@ func tabItemIndex(L *lua.LState) int {
 // ActiveWindow stores the currently active window for hot-reload reuse.
 var ActiveWindow fyne.Window
 
+// extraWindows stores additional windows created by Lua via gui.NewWindow().
+// These are closed on hot-reload.
+var extraWindows []fyne.Window
+
+// ClearExtraWindows closes and removes all extra windows. Called before hot-reload.
+func ClearExtraWindows() {
+	for _, w := range extraWindows {
+		w.Close()
+	}
+	extraWindows = nil
+}
+
 func lWindowFn(a fyne.App) lua.LGFunction {
 	return func(L *lua.LState) int {
 		title := L.CheckString(1)
@@ -352,6 +365,21 @@ func lWindowFn(a fyne.App) lua.LGFunction {
 			win.Resize(fyne.NewSize(width, height))
 		}
 		ActiveWindow = win
+		pushWidget(L, &LuaWidget{Win: win, Type: "Window"})
+		return 1
+	}
+}
+
+// lNewWindowFn creates a new independent window (not reused on hot-reload).
+// gui.NewWindow("标题", w, h) -- creates a fresh window every call.
+func lNewWindowFn(a fyne.App) lua.LGFunction {
+	return func(L *lua.LState) int {
+		title := L.CheckString(1)
+		width := float32(L.CheckNumber(2))
+		height := float32(L.CheckNumber(3))
+		win := a.NewWindow(title)
+		win.Resize(fyne.NewSize(width, height))
+		extraWindows = append(extraWindows, win)
 		pushWidget(L, &LuaWidget{Win: win, Type: "Window"})
 		return 1
 	}

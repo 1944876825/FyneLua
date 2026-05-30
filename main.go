@@ -58,6 +58,9 @@ func main() {
 // The LState stays alive for callbacks to work.
 // On subsequent calls (hot-reload), the old LState is closed first.
 func runScript(a fyne.App, script string) error {
+	// Close extra windows created by previous Lua run
+	bridge.ClearExtraWindows()
+
 	// Close old LState from previous run
 	if currentL != nil {
 		currentL.Close()
