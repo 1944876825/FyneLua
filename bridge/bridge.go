@@ -505,6 +505,7 @@ func windowMethod(L *lua.LState, w *LuaWidget, method string) {
 				if CurrentL != nil {
 					CurrentL.CallByParam(lua.P{Fn: fn, NRet: 0, Protect: true})
 				}
+				w.Win.Close()
 			})
 			return 0
 		}))
