@@ -3,9 +3,10 @@ local fileio = require("fileio")
 local net = require("net")
 local timer = require("timer")
 local dialog = require("dialog")
+local clipboard = require("clipboard")
 
 -- ========== 创建主窗口 ==========
-local win = gui.Window("Fyne + Lua 完整演示", 750, 620)
+local win = gui.Window("FyneLua 完整演示", 850, 650)
 
 -- ========== 菜单栏 ==========
 local isDark = gui.IsDarkMode()
@@ -46,15 +47,15 @@ win:SetMainMenu({
         label = "帮助",
         items = {
             { label = "关于", action = function()
-                dialog.showInfo("关于", "Fyne + Lua 演示项目\nGo + gopher-lua + Fyne v2\n\n支持热重载、对话框、菜单、主题切换")
+                dialog.showInfo("关于", "FyneLua 演示项目\nGo + gopher-lua + Fyne v2\n\n新增: List, Tree, Table, Split, Toolbar,\nCard, Accordion, Form, Clipboard")
             end },
         }
     },
 })
 
--- ========== 标签 ==========
-local title = gui.Label("🎉 Fyne + Lua 完整演示")
-local info  = gui.Label("网络 · 文件IO · 定时器 · 对话框 · 菜单 · 主题")
+-- ========== 标题 ==========
+local title = gui.Label("🎉 FyneLua 完整演示")
+local info  = gui.Label("List · Tree · Table · Split · Toolbar · Card · Accordion · Form · Clipboard")
 local themeLabel = gui.Label("主题: " .. (isDark and "🌙 Dark" or "☀️ Light"))
 
 -- ========== 按钮区 ==========
@@ -137,7 +138,7 @@ btnProgress:OnClick(function()
     statusLabel:SetText("进度加载完成！")
 end)
 
--- ========== Tab 1: 控件 ==========
+-- ========== Tab 1: 基础控件 ==========
 local buttonRow = gui.HBox(btnClick, btnReset, btnDanger, btnProgress)
 
 local leftPanel = gui.VBox(
@@ -166,7 +167,229 @@ local rightPanel = gui.VBox(
 
 local tab1Content = gui.VBox(buttonRow, gui.HBox(leftPanel, rightPanel))
 
--- ========== Tab 2: 网络 ==========
+-- ========== Tab 2: List 列表 ==========
+local items = {"Go", "Python", "Lua", "Rust", "JavaScript", "TypeScript", "C++", "Java", "Kotlin", "Swift"}
+local listStatusLabel = gui.Label("点击列表项查看")
+
+local listWidget = gui.List(
+    function() return #items end,
+    function(i)
+        return gui.Label("  📌 " .. items[i + 1])
+    end,
+    function(i)
+        listStatusLabel:SetText("✅ 选中: " .. items[i + 1])
+    end
+)
+
+local btnAddItem = gui.Button("添加项")
+btnAddItem:OnClick(function()
+    local name = "新语言 " .. (#items + 1)
+    table.insert(items, name)
+    listWidget:Refresh()
+    listStatusLabel:SetText("➕ 已添加: " .. name)
+end)
+
+local listPanel = gui.VBox(
+    gui.Label("📋 List 列表演示"),
+    gui.Separator(),
+    gui.HBox(btnAddItem),
+    listWidget,
+    listStatusLabel
+)
+
+-- ========== Tab 3: Tree 树形控件 ==========
+local treeStatusLabel = gui.Label("点击树节点查看")
+
+local treeData = {
+    root = {"src", "docs", "scripts"},
+    src = {"main.go", "bridge", "go.mod"},
+    bridge = {"bridge.go", "dialog.go", "net.go", "widgets2.go", "data_widgets.go"},
+    docs = {"README.md", "LICENSE"},
+    scripts = {"main.lua"},
+}
+
+local isBranchMap = {
+    root = true, src = true, bridge = true, docs = true, scripts = true,
+}
+
+local treeWidget = gui.Tree(
+    function(uid)
+        return treeData[uid] or {}
+    end,
+    function(uid)
+        return isBranchMap[uid] or false
+    end,
+    function(isBranch)
+        return gui.Label("  📄 " .. (isBranch and "📁" or "📄") .. " ...")
+    end,
+    function(uid)
+        treeStatusLabel:SetText("📂 选中: " .. uid)
+    end
+)
+
+local treePanel = gui.VBox(
+    gui.Label("🌳 Tree 树形控件演示"),
+    gui.Separator(),
+    treeWidget,
+    treeStatusLabel
+)
+
+-- ========== Tab 4: Table 表格 ==========
+local tableData = {
+    {"Go",      "1.24",  "静态编译", "⭐⭐⭐⭐⭐"},
+    {"Python",  "3.12",  "解释执行", "⭐⭐⭐⭐"},
+    {"Lua",     "5.4",   "嵌入式",   "⭐⭐⭐⭐⭐"},
+    {"Rust",    "1.80",  "内存安全", "⭐⭐⭐⭐"},
+    {"Java",    "21",    "跨平台",   "⭐⭐⭐"},
+}
+
+local tableStatusLabel = gui.Label("点击表格单元格查看")
+
+local tableWidget = gui.Table(
+    function() return #tableData, 4 end,
+    function(col, row)
+        local r = tableData[row + 1]
+        if r then
+            return gui.Label("  " .. (r[col + 1] or ""))
+        end
+        return gui.Label("")
+    end,
+    function(col, row)
+        local r = tableData[row + 1]
+        if r then
+            tableStatusLabel:SetText("📊 [" .. (row+1) .. "," .. (col+1) .. "] " .. (r[col + 1] or ""))
+        end
+    end
+)
+
+local tablePanel = gui.VBox(
+    gui.Label("📊 Table 表格演示"),
+    gui.Separator(),
+    tableWidget,
+    tableStatusLabel
+)
+
+-- ========== Tab 5: Split + Toolbar ==========
+local leftContent = gui.VBox(
+    gui.Label("◀ 左侧面板"),
+    gui.Separator(),
+    gui.Label("可拖拽分割线"),
+    gui.Label("调整两侧大小"),
+    gui.Label("左侧"),
+    gui.Label("左侧"),
+    gui.Label("左侧")
+)
+
+local rightContent = gui.VBox(
+    gui.Label("右侧面板 ▶"),
+    gui.Separator(),
+    gui.Label("这是右侧内容"),
+    gui.Label("可以放任何控件"),
+    gui.Label("右侧"),
+    gui.Label("右侧"),
+    gui.Label("右侧")
+)
+
+local splitWidget = gui.HSplit(leftContent, rightContent)
+
+local toolbarStatusLabel = gui.Label("点击工具栏按钮")
+
+local toolbar = gui.Toolbar({
+    {icon = "contentcopy",  action = function()
+        clipboard.Set("Hello from FyneLua!")
+        toolbarStatusLabel:SetText("📋 已复制到剪贴板")
+    end},
+    {icon = "contentpaste", action = function()
+        local text = clipboard.Get()
+        toolbarStatusLabel:SetText("📋 剪贴板内容: " .. text)
+    end},
+    {separator = true},
+    {icon = "search",       action = function()
+        toolbarStatusLabel:SetText("🔍 搜索功能...")
+    end},
+    {icon = "contentadd",   action = function()
+        toolbarStatusLabel:SetText("➕ 添加功能...")
+    end},
+    {icon = "documentsave", action = function()
+        toolbarStatusLabel:SetText("💾 保存功能...")
+    end},
+    {separator = true},
+    {icon = "visibility",   action = function()
+        toolbarStatusLabel:SetText("👁️ 显示/隐藏...")
+    end},
+})
+
+local splitPanel = gui.VBox(
+    gui.Label("🔀 Split 分割 + Toolbar 工具栏"),
+    gui.Separator(),
+    toolbar,
+    gui.Separator(),
+    splitWidget,
+    toolbarStatusLabel
+)
+
+-- ========== Tab 6: Card + Accordion + Form ==========
+local card1 = gui.Card("欢迎使用", "FyneLua 演示项目", gui.Label("这是一个用 Lua 驱动的 Fyne GUI 应用框架"))
+local card2 = gui.Card("新功能", "v2.0 新增", gui.Label("List, Tree, Table, Split, Toolbar, Card, Accordion, Form, Clipboard"))
+
+local cardPanel = gui.VBox(
+    gui.Label("🃏 Card 卡片演示"),
+    gui.Separator(),
+    gui.HBox(card1, card2)
+)
+
+local accordionContent1 = gui.Label("这是第一项的详细内容。\n\nAccordion 可以折叠展开，\n适合做 FAQ 或设置面板。")
+local accordionContent2 = gui.Label("第二项内容。\n\n支持 Open/Close/OpenAll/CloseAll 方法。")
+local accordionContent3 = gui.Label("第三项内容。")
+
+local acc = gui.Accordion({
+    {title = "📖 什么是 FyneLua？",     content = accordionContent1, open = true},
+    {title = "🔧 如何使用？",           content = accordionContent2, open = false},
+    {title = "💡 提示与技巧",           content = accordionContent3, open = false},
+})
+
+local accordionPanel = gui.VBox(
+    gui.Label("🪗 Accordion 折叠面板演示"),
+    gui.Separator(),
+    acc
+)
+
+local formName = gui.Entry()
+formName:SetPlaceHolder("输入姓名...")
+local formEmail = gui.Entry()
+formEmail:SetPlaceHolder("输入邮箱...")
+local formBio = gui.MultiLineEntry()
+formBio:SetPlaceHolder("个人简介...")
+
+local form = gui.Form({
+    {label = "姓名", widget = formName},
+    {label = "邮箱", widget = formEmail},
+    {label = "简介", widget = formBio},
+})
+form:OnSubmit(function()
+    dialog.showInfo("表单提交", "姓名: " .. formName:Text() .. "\n邮箱: " .. formEmail:Text())
+end)
+form:OnCancel(function()
+    formName:SetText("")
+    formEmail:SetText("")
+    formBio:SetText("")
+end)
+
+local formPanel = gui.VBox(
+    gui.Label("📝 Form 表单演示"),
+    gui.Separator(),
+    form
+)
+
+local tab6Content = gui.VBox(
+    cardPanel,
+    gui.Separator(),
+    accordionPanel,
+    gui.Separator(),
+    formPanel
+)
+
+-- ========== Tab 7: 网络 ==========
 local netStatusLabel = gui.Label("点击按钮发送 HTTP 请求")
 
 local btnHttpGet = gui.Button("HTTP GET")
@@ -195,63 +418,14 @@ btnHttpPost:OnClick(function()
     end)
 end)
 
-local btnLocalTest = gui.Button("本地测试")
-btnLocalTest:OnClick(function()
-    netStatusLabel:SetText("✅ 按钮点击正常！网络请求可能被墙")
-end)
-
 local netPanel = gui.VBox(
     gui.Label("🌐 HTTP 请求演示"),
     gui.Separator(),
-    gui.HBox(btnHttpGet, btnHttpPost, btnLocalTest),
+    gui.HBox(btnHttpGet, btnHttpPost),
     netStatusLabel
 )
 
--- ========== Tab 3: 文件 IO ==========
-local fileStatusLabel = gui.Label("点击按钮测试文件读写")
-
-local btnFileWrite = gui.Button("写入测试文件")
-btnFileWrite:OnClick(function()
-    local ok, err = fileio.writeFile("test_golua.txt", "Hello from golua-fyne! 🚀\n时间: " .. os.date())
-    fileStatusLabel:SetText(ok and "✅ 文件写入成功" or "❌ 写入失败: " .. tostring(err))
-end)
-
-local btnFileRead = gui.Button("读取测试文件")
-btnFileRead:OnClick(function()
-    local content, err = fileio.readFile("test_golua.txt")
-    if err then
-        fileStatusLabel:SetText("❌ 读取失败: " .. tostring(err))
-    else
-        fileStatusLabel:SetText("📄 内容: " .. tostring(content))
-    end
-end)
-
-local btnFileExists = gui.Button("检查文件")
-local fileExistsLabel = gui.Label("")
-btnFileExists:OnClick(function()
-    local exists = fileio.exists("test_golua.txt")
-    fileExistsLabel:SetText("文件存在: " .. tostring(exists))
-end)
-
-local btnFileList = gui.Button("列出目录")
-local fileListLabel = gui.Label("")
-btnFileList:OnClick(function()
-    local files = fileio.listDir(".")
-    fileListLabel:SetText("📁 文件数: " .. #files)
-end)
-
-local filePanel = gui.VBox(
-    gui.Label("📁 文件 IO 演示"),
-    gui.Separator(),
-    gui.HBox(btnFileWrite, btnFileRead),
-    gui.HBox(btnFileExists, btnFileList),
-    gui.Separator(),
-    fileStatusLabel,
-    fileExistsLabel,
-    fileListLabel
-)
-
--- ========== Tab 4: 定时器 ==========
+-- ========== Tab 8: 定时器 ==========
 local timerLabel = gui.Label("⏱️ 倒计时: 10 秒")
 local countdownTimerId = nil
 
@@ -300,7 +474,7 @@ local timerPanel = gui.VBox(
     afterLabel
 )
 
--- ========== Tab 5: 对话框 ==========
+-- ========== Tab 9: 对话框 ==========
 local dialogStatus = gui.Label("点击按钮测试各种对话框")
 
 local btnMsgBox = gui.Button("消息框")
@@ -347,27 +521,11 @@ btnSaveFile:OnClick(function()
     end)
 end)
 
-local btnProgressDialog = gui.Button("进度对话框")
-btnProgressDialog:OnClick(function()
-    local pd = dialog.showProgress("处理中", "正在下载...")
-    local v = 0
-    local tid = timer.every(200, function()
-        v = v + 10
-        pd.setValue(v)
-        if v >= 100 then
-            timer.cancel(tid)
-            pd.hide()
-            dialogStatus:SetText("✅ 进度对话框处理完成！")
-        end
-    end)
-end)
-
 local dialogPanel = gui.VBox(
     gui.Label("💬 对话框演示"),
     gui.Separator(),
     gui.HBox(btnMsgBox, btnErrorBox, btnConfirmBox),
     gui.HBox(btnInputBox, btnOpenFile, btnSaveFile),
-    gui.HBox(btnProgressDialog),
     gui.Separator(),
     dialogStatus
 )
@@ -375,8 +533,12 @@ local dialogPanel = gui.VBox(
 -- ========== 组装 Tabs ==========
 local tabs = gui.AppTabs(
     gui.TabItem("🎮 控件", tab1Content),
+    gui.TabItem("📋 List", listPanel),
+    gui.TabItem("🌳 Tree", treePanel),
+    gui.TabItem("📊 Table", tablePanel),
+    gui.TabItem("🔀 Split+Toolbar", splitPanel),
+    gui.TabItem("🃏 Card+Accordion+Form", tab6Content),
     gui.TabItem("🌐 网络", netPanel),
-    gui.TabItem("📁 文件 IO", filePanel),
     gui.TabItem("⏱️ 定时器", timerPanel),
     gui.TabItem("💬 对话框", dialogPanel)
 )

@@ -77,6 +77,21 @@ func NewEngine(a fyne.App) *lua.LState {
 	L.SetField(mod, "Rectangle", L.NewFunction(lRectangleFn))
 	L.SetField(mod, "MultiLineEntry", L.NewFunction(lMultiLineEntryFn))
 	L.SetField(mod, "PasswordEntry", L.NewFunction(lPasswordEntryFn))
+	// Data widgets
+	L.SetField(mod, "List", L.NewFunction(lListFn))
+	L.SetField(mod, "Tree", L.NewFunction(lTreeFn))
+	L.SetField(mod, "Table", L.NewFunction(lTableFn))
+	// Layout
+	L.SetField(mod, "HSplit", L.NewFunction(lHSplitFn))
+	L.SetField(mod, "VSplit", L.NewFunction(lVSplitFn))
+	// Toolbar
+	L.SetField(mod, "Toolbar", L.NewFunction(lToolbarFn))
+	// Card
+	L.SetField(mod, "Card", L.NewFunction(lCardFn))
+	// Accordion
+	L.SetField(mod, "Accordion", L.NewFunction(lAccordionFn))
+	// Form
+	L.SetField(mod, "Form", L.NewFunction(lFormFn))
 
 	// Preload so require("gui") works
 	L.PreloadModule("gui", func(L *lua.LState) int {
@@ -98,6 +113,11 @@ func NewEngine(a fyne.App) *lua.LState {
 	})
 	L.PreloadModule("dialog", func(L *lua.LState) int {
 		L.Push(DialogModule())
+		return 1
+	})
+	// Clipboard module
+	L.PreloadModule("clipboard", func(L *lua.LState) int {
+		L.Push(clipboardModule(L))
 		return 1
 	})
 
@@ -275,6 +295,23 @@ func widgetIndex(L *lua.LState) int {
 		imageMethod(L, w, method)
 	case "Rectangle":
 		rectangleMethod(L, w, method)
+	case "List":
+		listMethod(L, w, method)
+	case "Tree":
+		treeMethod(L, w, method)
+	case "Table":
+		tableMethod(L, w, method)
+	case "Toolbar":
+		// Toolbar has no methods currently
+		L.Push(lua.LNil)
+	case "Form":
+		formMethod(L, w, method)
+	case "Card":
+		cardMethod(L, w, method)
+	case "Accordion":
+		accordionMethod(L, w, method)
+	case "Split":
+		splitMethod(L, w, method)
 	default:
 		L.Push(lua.LNil)
 	}
