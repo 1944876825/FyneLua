@@ -76,6 +76,9 @@ local btnDanger = gui.Button("禁用我")
 btnDanger:SetImportance("high")
 btnDanger:Disable()
 
+local btnNewWin = gui.Button("🪟 新窗口")
+btnNewWin:SetImportance("medium")
+
 local clickCount = 0
 local statusLabel = gui.Label("等待点击...")
 
@@ -97,6 +100,25 @@ end)
 btnDanger:OnClick(function()
     statusLabel:SetText("💥 高级按钮被触发了！")
     btnDanger:Disable()
+end)
+
+btnNewWin:OnClick(function()
+    local win2 = gui.NewWindow("独立窗口 #" .. clickCount, 400, 300)
+    local counter2 = gui.Label("这里是独立窗口，互不影响")
+    local btnClose2 = gui.Button("关闭")
+    btnClose2:OnClick(function()
+        win2:Close()
+    end)
+    win2:SetContent(gui.VBox(
+        gui.Label("🪟 独立窗口示例"),
+        gui.Separator(),
+        counter2,
+        gui.Separator(),
+        btnClose2
+    ))
+    win2:CenterOnScreen()
+    win2:Show()
+    statusLabel:SetText("🪟 已打开新窗口")
 end)
 
 -- ========== 输入框 ==========
@@ -150,7 +172,7 @@ btnProgress:OnClick(function()
 end)
 
 -- ========== Tab 1: 基础控件 ==========
-local buttonRow = gui.HBox(btnClick, btnReset, btnDanger, btnProgress)
+local buttonRow = gui.HBox(btnClick, btnReset, btnDanger, btnNewWin, btnProgress)
 
 local leftPanel = gui.VBox(
     gui.Label("📝 文字输入"),
