@@ -595,13 +595,17 @@ func windowMethod(L *lua.LState, w *LuaWidget, method string) {
 			w.Win.SetMainMenu(fyneMenu)
 			return 0
 		}))
+	case "Close":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			w.Win.Close()
+			return 0
+		}))
 	default:
 		L.Push(lua.LNil)
 	}
 }
 
 // ---------- Button methods ----------
-
 func buttonMethod(L *lua.LState, w *LuaWidget, method string) {
 	switch method {
 	case "SetText":
