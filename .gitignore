@@ -1,0 +1,5 @@
+*.exe
+*.test
+golua-fyne
+test_golua.txt
+test.txt
